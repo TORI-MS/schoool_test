@@ -77,6 +77,24 @@ def load_events():
 
 events_data = load_events()
 
+# ── 창체 일정 로드 ────────────────────────────────────────────
+@st.cache_data(ttl=0)
+def load_schedule():
+    p = Path(__file__).parent / "schedule.json"
+    try:
+        with open(p, "r", encoding="utf-8") as f:
+            d = json.load(f)
+        result = []
+        for sem, items in d.items():
+            for item in items:
+                item["semester"] = sem
+                result.append(item)
+        return result
+    except Exception:
+        return []
+
+schedule_data = load_schedule()
+
 
 # ── 급식 API ─────────────────────────────────────────────────
 @st.cache_data(ttl=3600)
@@ -264,7 +282,91 @@ st.markdown(_dday_html, unsafe_allow_html=True)
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════
-#  3. 급식
+#  3. 특이사항 (창체 일정)
+# ══════════════════════════════════════════════════════════════
+st.markdown('<h2 style="color:#1a1a2e; margin-bottom:8px;">📌 특이사항</h2>', unsafe_allow_html=True)
+
+# 오늘 또는 표시 기준일의 일정 필터링
+_target_date_str = meal_dt.strftime("%Y-%m-%d")
+_today_schedule = [s for s in schedule_data if s.get("date") == _target_date_str]
+
+# 유형별 색상
+_type_colors = {
+    "자율활동":   {"bg": "#eef2ff", "border": "#667eea", "text": "#667eea", "icon": "📘"},
+    "봉사활동":   {"bg": "#fff8e1", "border": "#f9a825", "text": "#f57f17", "icon": "🤝"},
+    "동아리활동": {"bg": "#e8f5e9", "border": "#43a047", "text": "#2e7d32", "icon": "🎨"},
+    "진로활동":   {"bg": "#fce4ec", "border": "#e91e63", "text": "#c2185b", "icon": "🎯"},
+}
+
+if _today_schedule:
+    for item in _today_schedule:
+        t = item.get("type", "자율활동")
+        style = _type_colors.get(t, {"bg":"#f5f6fa","border":"#aaa","text":"#555","icon":"📋"})
+        time_str = item.get("time","")
+        prog = item.get("program","")
+        st.markdown(
+            f'<div style="background:{style["bg"]}; border-left:5px solid {style["border"]}; '
+            f'border-radius:10px; padding:10px 18px; margin-bottom:8px; '
+            f'display:flex; align-items:center; justify-content:space-between;">' 
+            f'<div>'
+            f'<span style="font-size:.82rem; color:#888; margin-right:8px;">⏰ {time_str}</span>'
+            f'<span style="font-weight:700; color:#1a1a2e; font-size:.97rem;">{prog}</span>'
+            f'</div>'
+            f'<span style="background:{style["border"]}; color:#fff; border-radius:20px; '
+            f'padding:2px 12px; font-size:.8rem; font-weight:600; white-space:nowrap;">'
+            f'{style["icon"]} {t}</span>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+else:
+    st.markdown(
+        '<div style="background:#f8f9fa; border-radius:10px; padding:12px 18px; '
+        'color:#aaa; font-size:.95rem; text-align:center;">오늘 특이사항이 없어요 ✅</div>',
+        unsafe_allow_html=True
+    )
+
+# 이번 주 일정 미리보기 (오늘 제외)
+from datetime import date as date_type
+_week_start = meal_dt.date() - timedelta(days=meal_dt.weekday())
+_week_end   = _week_start + timedelta(days=4)
+_week_schedule = [
+    s for s in schedule_data
+    if s.get("date","") != _target_date_str
+    and _week_start <= datetime.strptime(s["date"], "%Y-%m-%d").date() <= _week_end
+]
+
+if _week_schedule:
+    with st.expander("📅 이번 주 나머지 일정"):
+        _prev_date = ""
+        for item in sorted(_week_schedule, key=lambda x: (x["date"], x["time"])):
+            t = item.get("type","자율활동")
+            style = _type_colors.get(t, {"bg":"#f5f6fa","border":"#aaa","text":"#555","icon":"📋"})
+            d = item.get("date","")
+            if d != _prev_date:
+                _d_obj = datetime.strptime(d, "%Y-%m-%d")
+                _wday  = ["월","화","수","목","금","토","일"][_d_obj.weekday()]
+                st.markdown(
+                    f'<div style="font-weight:700; color:#0f3460; font-size:.88rem; '
+                    f'margin:10px 0 4px;">{_d_obj.strftime("%m/%d")} ({_wday})</div>',
+                    unsafe_allow_html=True
+                )
+                _prev_date = d
+            time_str = item.get("time","")
+            prog = item.get("program","")
+            st.markdown(
+                f'<div style="background:{style["bg"]}; border-left:4px solid {style["border"]}; '
+                f'border-radius:8px; padding:6px 14px; margin-bottom:4px; '
+                f'display:flex; align-items:center; justify-content:space-between;">' 
+                f'<span style="font-size:.85rem; color:#555;">⏰ {time_str} &nbsp; <b>{prog}</b></span>'
+                f'<span style="font-size:.75rem; color:{style["text"]}; font-weight:600;">'
+                f'{style["icon"]} {t}</span></div>',
+                unsafe_allow_html=True
+            )
+
+st.markdown("<br>", unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════
+#  4. 급식
 # ══════════════════════════════════════════════════════════════
 st.markdown('<h2 style="color:#1a1a2e; margin-bottom:8px;">🍱 급식</h2>', unsafe_allow_html=True)
 
@@ -305,7 +407,7 @@ else:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════
-#  4. 시간표
+#  5. 시간표
 # ══════════════════════════════════════════════════════════════
 st.markdown(
     '<h2 style="color:#1a1a2e; margin-bottom:4px;">📚 시간표</h2>'
