@@ -4,6 +4,7 @@ import requests
 import re
 import json
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 st.set_page_config(page_title="🏫 3-11 전용", page_icon="🏫", layout="centered")
@@ -30,8 +31,8 @@ API_KEY            = "ee1619138aef47d7a9a8200b7dbe52b5"
 ATPT_OFCDC_SC_CODE = "E10"
 SD_SCHUL_CODE      = "7310405"
 
-# ── 날짜 계산 ────────────────────────────────────────────────
-now = datetime.now()
+# ── 날짜 계산 (한국 시간 기준) ───────────────────────────────
+now = datetime.now(ZoneInfo("Asia/Seoul"))
 
 def calc_target(dt: datetime):
     mins = dt.hour * 60 + dt.minute
@@ -133,7 +134,6 @@ def parse_menu(raw: str) -> list:
     return cleaned
 
 # ── 과목 색상 ─────────────────────────────────────────────────
-# JSON 과목명 그대로 키로 등록 (띄어쓰기 변형 모두 포함)
 subject_colors = {
     # 기본 / 공통
     "화작":               "#e17055",
@@ -308,7 +308,7 @@ if _today_schedule:
         st.markdown(
             f'<div style="background:{style["bg"]}; border-left:5px solid {style["border"]}; '
             f'border-radius:10px; padding:10px 18px; margin-bottom:8px; '
-            f'display:flex; align-items:center; justify-content:space-between;">' 
+            f'display:flex; align-items:center; justify-content:space-between;">'
             f'<div>'
             f'<span style="font-size:.82rem; color:#888; margin-right:8px;">⏰ {time_str}</span>'
             f'<span style="font-weight:700; color:#1a1a2e; font-size:.97rem;">{prog}</span>'
@@ -357,7 +357,7 @@ if _week_schedule:
             st.markdown(
                 f'<div style="background:{style["bg"]}; border-left:4px solid {style["border"]}; '
                 f'border-radius:8px; padding:6px 14px; margin-bottom:4px; '
-                f'display:flex; align-items:center; justify-content:space-between;">' 
+                f'display:flex; align-items:center; justify-content:space-between;">'
                 f'<span style="font-size:.85rem; color:#555;">⏰ {time_str} &nbsp; <b>{prog}</b></span>'
                 f'<span style="font-size:.75rem; color:{style["text"]}; font-weight:600;">'
                 f'{style["icon"]} {t}</span></div>',
@@ -499,7 +499,6 @@ for day in other_days:
         show_day(day)
 
 st.markdown("<br>", unsafe_allow_html=True)
-
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ── 푸터 ─────────────────────────────────────────────────────
