@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from pathlib import Path
 
+
 st.set_page_config(page_title="🏫 3-11 전용", page_icon="🏫", layout="centered")
 
 st.markdown("""
