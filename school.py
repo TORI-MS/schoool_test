@@ -287,8 +287,9 @@ st.markdown("<br>", unsafe_allow_html=True)
 st.markdown('<h2 style="color:#1a1a2e; margin-bottom:8px;">📌 특이사항</h2>', unsafe_allow_html=True)
 
 # 오늘 또는 표시 기준일의 일정 필터링
-_target_date_str = meal_dt.strftime("%Y-%m-%d")
-_today_schedule = [s for s in schedule_data if s.get("date") == _target_date_str]
+# 특이사항은 실제 오늘 기준 (급식/시간표와 무관)
+_today_date_str = now.strftime("%Y-%m-%d")
+_today_schedule = [s for s in schedule_data if s.get("date") == _today_date_str]
 
 # 유형별 색상
 _type_colors = {
@@ -327,11 +328,11 @@ else:
 
 # 이번 주 일정 미리보기 (오늘 제외)
 from datetime import date as date_type
-_week_start = meal_dt.date() - timedelta(days=meal_dt.weekday())
+_week_start = now.date() - timedelta(days=now.weekday())
 _week_end   = _week_start + timedelta(days=4)
 _week_schedule = [
     s for s in schedule_data
-    if s.get("date","") != _target_date_str
+    if s.get("date","") != _today_date_str
     and _week_start <= datetime.strptime(s["date"], "%Y-%m-%d").date() <= _week_end
 ]
 
