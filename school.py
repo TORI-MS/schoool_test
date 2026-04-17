@@ -82,7 +82,7 @@ events_data = load_events()
 # ── 창체 일정 로드 ────────────────────────────────────────────
 @st.cache_data(ttl=0)
 def load_schedule():
-    p = Path(__file__).parent / "schedule.json"
+    p = Path(__file__).parent / "Schedule.json"
     try:
         with open(p, "r", encoding="utf-8") as f:
             d = json.load(f)
